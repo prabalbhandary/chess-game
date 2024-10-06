@@ -7,6 +7,7 @@ import { Toaster, toast } from 'react-hot-toast';
 const App = () => {
   const [game, setGame] = useState(new Chess());
   const [difficulty, setDifficulty] = useState('easy');
+  const [history, setHistory] = useState([]);
 
   const safeGameMutate = (modify) => {
     setGame((g) => {
@@ -90,6 +91,7 @@ const App = () => {
     const bestMove = getBestMove();
     safeGameMutate((game) => {
       game.move(bestMove);
+      setHistory((h) => [...h, bestMove]);
     });
   };
 
@@ -101,6 +103,9 @@ const App = () => {
         to: target,
         promotion: 'q'
       });
+      if (move) {
+        setHistory((h) => [...h, move]);
+      }
     });
 
     if (move == null) {
@@ -121,6 +126,27 @@ const App = () => {
     return true;
   };
 
+  const handleUndo = () => {
+    if (history.length === 0) {
+      toast.error('No moves to undo!', { icon: '🚫' });
+      return;
+    }
+
+    const lastMove = history[history.length - 1];
+    safeGameMutate((game) => {
+      game.undo();
+    });
+
+    setHistory((h) => h.slice(0, h.length - 1));
+    toast.success('Move undone!', { icon: '🔄' });
+  };
+
+  const handleReset = () => {
+    setGame(new Chess());
+    setHistory([]);
+    toast.success('Game reset!', { icon: '🔄' });
+  };
+
   return (
     <div className="app">
       <Toaster position='top-right' />
@@ -137,6 +163,10 @@ const App = () => {
         position={game.fen()}
         onPieceDrop={onDrop}
       />
+      <div className="controls">
+        <button className="button" onClick={handleUndo}>Undo</button>
+        <button className="button" onClick={handleReset}>Reset</button>
+      </div>
     </div>
   );
 };
