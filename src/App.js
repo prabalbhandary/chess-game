@@ -22,7 +22,7 @@ const App = () => {
 
   const safeGameMutate = (modify) => {
     setGame((g) => {
-      const update = { ...g };
+      const update = new Chess(g.fen());
       modify(update);
       return update;
     });
@@ -39,17 +39,12 @@ const App = () => {
     };
 
     let totalValue = 0;
-    for (const [piece, count] of Object.entries(game.board().flat().reduce((acc, square) => {
+    for (const square of game.board().flat()) {
       if (square) {
-        const pieceType = square.type;
-        const pieceColor = square.color === 'w' ? pieceType : pieceType.toUpperCase();
-        acc[pieceColor] = (acc[pieceColor] || 0) + 1;
+        const pieceColor = square.color === 'w' ? square.type : square.type.toUpperCase();
+        totalValue += pieceValue[square.type] * (square.color === 'w' ? 1 : -1);
       }
-      return acc;
-    }, {}))) {
-      totalValue += pieceValue[piece.toLowerCase()] * count;
     }
-
     return totalValue;
   };
 
@@ -105,9 +100,8 @@ const App = () => {
       setHistory((h) => [...h, bestMove]);
       toast.success('Opponent moved: ' + bestMove, { icon: '🤖' });
 
-      // Check if the opponent's move puts the player in check
       if (game.in_check()) {
-        checkSound.current.play(); // Play check sound for opponent
+        checkSound.current.play();
         toast('Check!', { icon: '⚠️' });
       }
     });
@@ -119,28 +113,27 @@ const App = () => {
         const move = game.move({
           from: selectedSquare,
           to: square,
-          promotion: 'q'
+          promotion: 'q',
         });
 
         if (move) {
           setHistory((h) => [...h, move]);
           toast.success('Move successful!', { icon: '✅' });
 
-          // Check if the move puts the opponent in check
           if (game.in_check()) {
-            checkSound.current.play(); // Play check sound for player
+            checkSound.current.play();
             toast('Check!', { icon: '⚠️' });
           }
 
           if (game.in_checkmate()) {
-            checkmateSound.current.play(); // Play checkmate sound
+            checkmateSound.current.play();
             toast.error('Checkmate! Game over!', { icon: '🛑' });
             return;
           }
 
           setTimeout(makeRandomMove, 300);
         } else {
-          toast.error('Illegal move!', { icon: '🚫' });
+          toast.error('Illegal move! Please try again.', { icon: '🚫' });
         }
       });
       setSelectedSquare(null);
@@ -148,6 +141,8 @@ const App = () => {
       const piece = game.get(square);
       if (piece && piece.color === game.turn()) {
         setSelectedSquare(square);
+      } else {
+        toast.error('Select your piece first!', { icon: '🚫' });
       }
     }
   };
