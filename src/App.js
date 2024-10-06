@@ -8,6 +8,7 @@ const App = () => {
   const [game, setGame] = useState(new Chess());
   const [difficulty, setDifficulty] = useState('easy');
   const [history, setHistory] = useState([]);
+  const [selectedSquare, setSelectedSquare] = useState(null); // Track selected piece
 
   const safeGameMutate = (modify) => {
     setGame((g) => {
@@ -42,13 +43,13 @@ const App = () => {
     return totalValue;
   };
 
-  const getBestMove = (depth = 1) => {
+  const getBestMove = () => {
     const possibleMoves = game.moves();
 
     if (difficulty === 'easy') {
       return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
     } 
-    
+
     if (difficulty === 'medium') {
       const captures = possibleMoves.filter(move => game.get(move).captured);
       if (captures.length > 0) {
@@ -56,7 +57,7 @@ const App = () => {
       }
       return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
     } 
-    
+
     if (difficulty === 'hard') {
       let bestMove = null;
       let bestValue = -Infinity;
@@ -92,38 +93,45 @@ const App = () => {
     safeGameMutate((game) => {
       game.move(bestMove);
       setHistory((h) => [...h, bestMove]);
+      toast.success('Opponent moved: ' + bestMove, { icon: '🤖' });
     });
   };
 
-  const onDrop = (source, target) => {
-    let move = null;
-    safeGameMutate((game) => {
-      move = game.move({
-        from: source,
-        to: target,
-        promotion: 'q'
+  const handleSquareClick = (square) => {
+    if (selectedSquare) {
+      // Move the piece to the target square
+      safeGameMutate((game) => {
+        const move = game.move({
+          from: selectedSquare,
+          to: square,
+          promotion: 'q' // always promote to a queen for simplicity
+        });
+        
+        if (move) {
+          setHistory((h) => [...h, move]);
+          toast.success('Move successful!', { icon: '✅' });
+
+          if (game.in_check()) {
+            toast('Check!', { icon: '⚠️' });
+          }
+          if (game.in_checkmate()) {
+            toast.error('Checkmate! Game over!', { icon: '🛑' });
+            return;
+          }
+
+          // After the player's move, make the opponent's move
+          setTimeout(makeRandomMove, 300); // Delay opponent's move for visibility
+        } else {
+          toast.error('Illegal move!', { icon: '🚫' });
+        }
       });
-      if (move) {
-        setHistory((h) => [...h, move]);
+      setSelectedSquare(null); // Reset selected square
+    } else {
+      const piece = game.get(square);
+      if (piece && piece.color === game.turn()) {
+        setSelectedSquare(square); // Select the piece
       }
-    });
-
-    if (move == null) {
-      toast.error('Illegal move!', { icon: '🚫' });
-      return false;
     }
-
-    if (game.in_check()) {
-      toast('Check!', { icon: '⚠️' });
-    }
-    if (game.in_checkmate()) {
-      toast.error('Checkmate! Game over!', { icon: '🛑' });
-      return false;
-    }
-
-    toast.success('Move successful!', { icon: '✅' });
-    setTimeout(makeRandomMove, 200);
-    return true;
   };
 
   const handleUndo = () => {
@@ -132,7 +140,6 @@ const App = () => {
       return;
     }
 
-    const lastMove = history[history.length - 1];
     safeGameMutate((game) => {
       game.undo();
     });
@@ -161,7 +168,7 @@ const App = () => {
       </div>
       <Chessboard 
         position={game.fen()}
-        onPieceDrop={onDrop}
+        onSquareClick={handleSquareClick}
       />
       <div className="controls">
         <button className="button" onClick={handleUndo}>Undo</button>
