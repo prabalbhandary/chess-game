@@ -8,7 +8,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 
 // Import audio files
 import checkSoundFile from './assets/check.mp3';
-import checkmateSoundFile from './assets/check.mp3';
+import checkmateSoundFile from './assets/checkmate.mp3';
 
 const App = () => {
   const [game, setGame] = useState(new Chess());
@@ -104,6 +104,12 @@ const App = () => {
       game.move(bestMove);
       setHistory((h) => [...h, bestMove]);
       toast.success('Opponent moved: ' + bestMove, { icon: '🤖' });
+
+      // Check if the opponent's move puts the player in check
+      if (game.in_check()) {
+        checkSound.current.play(); // Play check sound for opponent
+        toast('Check!', { icon: '⚠️' });
+      }
     });
   };
 
@@ -120,10 +126,12 @@ const App = () => {
           setHistory((h) => [...h, move]);
           toast.success('Move successful!', { icon: '✅' });
 
+          // Check if the move puts the opponent in check
           if (game.in_check()) {
-            checkSound.current.play(); // Play check sound
+            checkSound.current.play(); // Play check sound for player
             toast('Check!', { icon: '⚠️' });
           }
+
           if (game.in_checkmate()) {
             checkmateSound.current.play(); // Play checkmate sound
             toast.error('Checkmate! Game over!', { icon: '🛑' });
