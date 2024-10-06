@@ -72,3 +72,27 @@ h1 {
 .button:hover {
   background-color: #45a049;
 }
+select {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  font-size: 16px;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+select:hover {
+  border-color: #4CAF50;
+}
+
+option {
+  background-color: #fff;
+  color: #333;
+  padding: 10px;
+}
+
+option:hover {
+  background-color: #f1f1f1;
+}
