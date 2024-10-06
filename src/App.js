@@ -46,27 +46,37 @@ const App = () => {
 
     if (difficulty === 'easy') {
       return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-    } else if (difficulty === 'medium') {
+    } 
+    
+    if (difficulty === 'medium') {
       const captures = possibleMoves.filter(move => game.get(move).captured);
       if (captures.length > 0) {
         return captures[Math.floor(Math.random() * captures.length)];
       }
       return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-    } else if (difficulty === 'hard') {
+    } 
+    
+    if (difficulty === 'hard') {
       let bestMove = null;
       let bestValue = -Infinity;
 
-      for (const move of possibleMoves) {
+      const evaluatedMoves = possibleMoves.map(move => {
+        let value = 0;
         safeGameMutate((g) => {
           g.move(move);
-          const boardValue = evaluateBoard(g);
-          if (boardValue > bestValue) {
-            bestValue = boardValue;
-            bestMove = move;
-          }
+          value = evaluateBoard(g);
           g.undo();
         });
+        return { move, value };
+      });
+
+      for (const { move, value } of evaluatedMoves) {
+        if (value > bestValue) {
+          bestValue = value;
+          bestMove = move;
+        }
       }
+      
       return bestMove || possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
     }
   };
