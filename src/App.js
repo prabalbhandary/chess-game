@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import { Toaster, toast } from 'react-hot-toast';
+import { DndProvider, DndContext } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend'; // Add this line to use the HTML5 backend
 
 const App = () => {
   const [game, setGame] = useState(new Chess());
@@ -155,26 +157,28 @@ const App = () => {
   };
 
   return (
-    <div className="app">
-      <Toaster position='top-right' />
-      <h1>Chess Game</h1>
-      <div>
-        <label>Select Difficulty: </label>
-        <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
+    <DndProvider backend={HTML5Backend}>
+      <div className="app">
+        <Toaster position='top-right' />
+        <h1>Chess Game</h1>
+        <div>
+          <label>Select Difficulty: </label>
+          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        <Chessboard 
+          position={game.fen()}
+          onSquareClick={handleSquareClick}
+        />
+        <div className="controls">
+          <button className="button" onClick={handleUndo}>Undo</button>
+          <button className="button" onClick={handleReset}>Reset</button>
+        </div>
       </div>
-      <Chessboard 
-        position={game.fen()}
-        onSquareClick={handleSquareClick}
-      />
-      <div className="controls">
-        <button className="button" onClick={handleUndo}>Undo</button>
-        <button className="button" onClick={handleReset}>Reset</button>
-      </div>
-    </div>
+    </DndProvider>
   );
 };
 
