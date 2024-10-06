@@ -1,16 +1,24 @@
 import './App.css';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import { Toaster, toast } from 'react-hot-toast';
-import { DndProvider, DndContext } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend'; // Add this line to use the HTML5 backend
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+
+// Import audio files
+import checkSoundFile from './assets/check.mp3';
+import checkmateSoundFile from './assets/check.mp3';
 
 const App = () => {
   const [game, setGame] = useState(new Chess());
   const [difficulty, setDifficulty] = useState('easy');
   const [history, setHistory] = useState([]);
-  const [selectedSquare, setSelectedSquare] = useState(null); // Track selected piece
+  const [selectedSquare, setSelectedSquare] = useState(null);
+
+  // Audio references
+  const checkSound = useRef(new Audio(checkSoundFile));
+  const checkmateSound = useRef(new Audio(checkmateSoundFile));
 
   const safeGameMutate = (modify) => {
     setGame((g) => {
@@ -50,7 +58,7 @@ const App = () => {
 
     if (difficulty === 'easy') {
       return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-    } 
+    }
 
     if (difficulty === 'medium') {
       const captures = possibleMoves.filter(move => game.get(move).captured);
@@ -58,7 +66,7 @@ const App = () => {
         return captures[Math.floor(Math.random() * captures.length)];
       }
       return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-    } 
+    }
 
     if (difficulty === 'hard') {
       let bestMove = null;
@@ -80,7 +88,7 @@ const App = () => {
           bestMove = move;
         }
       }
-      
+
       return bestMove || possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
     }
   };
@@ -101,37 +109,37 @@ const App = () => {
 
   const handleSquareClick = (square) => {
     if (selectedSquare) {
-      // Move the piece to the target square
       safeGameMutate((game) => {
         const move = game.move({
           from: selectedSquare,
           to: square,
-          promotion: 'q' // always promote to a queen for simplicity
+          promotion: 'q'
         });
-        
+
         if (move) {
           setHistory((h) => [...h, move]);
           toast.success('Move successful!', { icon: '✅' });
 
           if (game.in_check()) {
+            checkSound.current.play(); // Play check sound
             toast('Check!', { icon: '⚠️' });
           }
           if (game.in_checkmate()) {
+            checkmateSound.current.play(); // Play checkmate sound
             toast.error('Checkmate! Game over!', { icon: '🛑' });
             return;
           }
 
-          // After the player's move, make the opponent's move
-          setTimeout(makeRandomMove, 300); // Delay opponent's move for visibility
+          setTimeout(makeRandomMove, 300);
         } else {
           toast.error('Illegal move!', { icon: '🚫' });
         }
       });
-      setSelectedSquare(null); // Reset selected square
+      setSelectedSquare(null);
     } else {
       const piece = game.get(square);
       if (piece && piece.color === game.turn()) {
-        setSelectedSquare(square); // Select the piece
+        setSelectedSquare(square);
       }
     }
   };
